@@ -8,8 +8,9 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 
+
 app.get('/',(req,res)=>{
-    res.send("wassup guys.?");
+    res.send("wellcom to spare parts.!");
 })
 
 app.listen(port,()=>{
