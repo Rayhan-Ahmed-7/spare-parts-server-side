@@ -35,7 +35,7 @@ async function run(){
         const carPartsCollection = client.db("spare-parts").collection("car-parts");
         const userCollection = client.db("spare-parts").collection("users");
         //console.log('db connected');
-        app.get('/car-parts',verifyJwt,async(req,res)=>{
+        app.get('/car-parts',async(req,res)=>{
             const result = await carPartsCollection.find({}).toArray();
             res.send(result);
         })
@@ -62,6 +62,8 @@ async function run(){
             })
             res.send({ result, token });
         })
+        //orders
+
     }
     finally{
         //await client.close();
