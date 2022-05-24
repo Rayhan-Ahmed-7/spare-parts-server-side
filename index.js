@@ -34,6 +34,7 @@ async function run(){
         await client.connect()
         const carPartsCollection = client.db("spare-parts").collection("car-parts");
         const userCollection = client.db("spare-parts").collection("users");
+        const orderCollection = client.db("spare-parts").collection("orders");
         //console.log('db connected');
         app.get('/car-parts',async(req,res)=>{
             const result = await carPartsCollection.find({}).toArray();
@@ -63,6 +64,18 @@ async function run(){
             res.send({ result, token });
         })
         //orders
+        app.post('/order',async(req,res)=>{
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
+        })
+        //get user order
+        app.get('/orders/:email',verifyJwt,async(req,res)=>{
+            const email = req.params.email;
+            const query = {email};
+            const result = await orderCollection.find(query).toArray();
+            res.send(result);
+        })
 
     }
     finally{
