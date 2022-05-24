@@ -33,6 +33,7 @@ async function run(){
     try{
         await client.connect()
         const carPartsCollection = client.db("spare-parts").collection("car-parts");
+        const reviewCollection = client.db("spare-parts").collection("reviews");
         const userCollection = client.db("spare-parts").collection("users");
         const orderCollection = client.db("spare-parts").collection("orders");
         //console.log('db connected');
@@ -74,6 +75,12 @@ async function run(){
             const email = req.params.email;
             const query = {email};
             const result = await orderCollection.find(query).toArray();
+            res.send(result);
+        })
+        //reviews api
+        app.get('/reviews',verifyJwt,async(req,res)=>{
+            const query = {};
+            const result = await reviewCollection.find(query).toArray();
             res.send(result);
         })
 
