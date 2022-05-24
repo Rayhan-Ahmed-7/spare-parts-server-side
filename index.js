@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 //middleware
 app.use(cors());
 app.use(express.json());
@@ -37,6 +39,18 @@ async function run(){
         const userCollection = client.db("spare-parts").collection("users");
         const orderCollection = client.db("spare-parts").collection("orders");
         //console.log('db connected');
+        //stripe payment intent
+        app.post('/create-payment-intent',verifyJwt,async(req,res)=>{
+            const service = req.body;
+            const price = service.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount:amount,
+                currency:'usd',
+                payment_method_types:['card']
+            });
+            res.send({clientSecret:paymentIntent.client_secret});
+        })
         app.get('/car-parts',async(req,res)=>{
             const result = await carPartsCollection.find({}).toArray();
             res.send(result);
@@ -75,6 +89,20 @@ async function run(){
             const email = req.params.email;
             const query = {email};
             const result = await orderCollection.find(query).toArray();
+            res.send(result);
+        })
+        //get single user order
+        app.get('/orders/:id',verifyJwt,async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await orderCollection.findOne(query);
+            res.send(result);
+        })
+        //delete user order
+        app.delete('/orders/:id',verifyJwt,async(req,res)=>{
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const result = await orderCollection.deleteOne(query);
             res.send(result);
         })
         //reviews api
