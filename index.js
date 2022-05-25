@@ -38,11 +38,12 @@ async function run(){
         const reviewCollection = client.db("spare-parts").collection("reviews");
         const userCollection = client.db("spare-parts").collection("users");
         const orderCollection = client.db("spare-parts").collection("orders");
+        const paymentCollection = client.db("spare-parts").collection("payments");
         //console.log('db connected');
         //stripe payment intent
         app.post('/create-payment-intent',verifyJwt,async(req,res)=>{
-            const service = req.body;
-            const price = service.price;
+            const order = req.body;
+            const price = order.price;
             const amount = price*100;
             const paymentIntent = await stripe.paymentIntents.create({
                 amount:amount,
@@ -92,11 +93,26 @@ async function run(){
             res.send(result);
         })
         //get single user order
-        app.get('/orders/:id',verifyJwt,async(req,res)=>{
+        app.get('/order/:id',verifyJwt,async(req,res)=>{
             const id = req.params.id;
             const query = {_id:ObjectId(id)};
             const result = await orderCollection.findOne(query);
             res.send(result);
+        })
+        //update order
+        app.patch('/order/:id',verifyJwt,async(req,res)=>{
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id:ObjectId(id)};
+            const updateDoc = {
+                $set:{
+                    paid:true,
+                    transactionId:payment.transactionId,
+                }
+            }
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await orderCollection.updateOne(filter,updateDoc);
+            res.send(updateDoc);
         })
         //delete user order
         app.delete('/orders/:id',verifyJwt,async(req,res)=>{
