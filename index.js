@@ -11,6 +11,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use(express.json());
 
+//jwt verification
 const verifyJwt = async (req, res, next) => {
     const header = req.headers.authorization;
     if (!header) {
@@ -27,6 +28,7 @@ const verifyJwt = async (req, res, next) => {
     })
 }
 
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wkgcv.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -41,6 +43,16 @@ async function run() {
         const paymentCollection = client.db("spare-parts").collection("payments");
         //console.log('db connected');
         //stripe payment intent
+        //admin verification
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            } else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
         app.post('/create-payment-intent', verifyJwt, async (req, res) => {
             const order = req.body;
             const price = order.price;
@@ -86,6 +98,27 @@ async function run() {
             const result = await userCollection.findOne(query);
             res.send(result);
         })
+        //check user admin or not
+        app.get('/admin/:email', verifyJwt, async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await userCollection.findOne(query);
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
+        //make user a admin
+        app.put('/admin/:email', verifyJwt, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email };
+            const updateDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const user = await userCollection.updateOne(filter, updateDoc);
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
         // updating user
         app.put('/user/:email', async (req, res) => {
             const user = req.body;
@@ -94,10 +127,10 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    education:user.education,
-                    location:user.location,
-                    phone:user.phone,
-                    linkedIn:user.linkedIn
+                    education: user.education,
+                    location: user.location,
+                    phone: user.phone,
+                    linkedIn: user.linkedIn
                 }
             }
             const result = await userCollection.updateOne(filter, updateDoc, options);
@@ -143,6 +176,11 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        })
+        //get all orders
+        app.get('/orders', verifyJwt, verifyAdmin, async (req, res) => {
+            const result = await orderCollection.find().toArray();
             res.send(result);
         })
         //reviews api
