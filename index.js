@@ -96,6 +96,23 @@ async function run() {
             })
             res.send({ result, token });
         })
+        //get all user 
+        app.get('/users',verifyJwt,verifyAdmin,async(req,res)=>{
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
+        // //update user role
+        // app.patch('/user/:email',verifyJwt,verifyAdmin,async(req,res)=>{
+        //     const email = req.params.email;
+        //     const filter = {email};
+        //     const updateDoc = {
+        //         $set:{
+        //             role:'admin'
+        //         }
+        //     }
+        //     const user = await userCollection.updateOne(filter,updateDoc);
+        //     res.send(user);
+        // })
         //get user 
         app.get('/user/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
@@ -112,7 +129,7 @@ async function run() {
             res.send({ admin: isAdmin });
         })
         //make user a admin
-        app.put('/admin/:email', verifyJwt, verifyAdmin, async (req, res) => {
+        app.put('/admin/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
             const filter = { email };
             const updateDoc = {
@@ -121,8 +138,8 @@ async function run() {
                 }
             }
             const user = await userCollection.updateOne(filter, updateDoc);
-            const isAdmin = user.role === 'admin';
-            res.send({ admin: isAdmin });
+            //const isAdmin = user.role === 'admin';
+            res.send(user);
         })
         // updating user
         app.put('/user/:email', async (req, res) => {
