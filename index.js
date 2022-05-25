@@ -68,6 +68,11 @@ async function run() {
             const result = await carPartsCollection.find({}).toArray();
             res.send(result);
         })
+        app.post('/car-parts',verifyJwt,verifyAdmin, async (req, res) => {
+            const product = req.body;
+            const result = await carPartsCollection.insertOne(product);
+            res.send(result);
+        })
         //single car-part
         app.get('/car-parts/:id', verifyJwt, async (req, res) => {
             const id = req.params.id;
