@@ -80,6 +80,13 @@ async function run() {
             const result = await carPartsCollection.findOne(query);
             res.send(result);
         })
+        //delete spare parts
+        app.delete('/car-parts/:id', verifyJwt, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await carPartsCollection.deleteOne(query);
+            res.send(result);
+        })
         // creating user
         app.put('/user', async (req, res) => {
             const user = req.body;
@@ -101,18 +108,7 @@ async function run() {
             const users = await userCollection.find().toArray();
             res.send(users);
         })
-        // //update user role
-        // app.patch('/user/:email',verifyJwt,verifyAdmin,async(req,res)=>{
-        //     const email = req.params.email;
-        //     const filter = {email};
-        //     const updateDoc = {
-        //         $set:{
-        //             role:'admin'
-        //         }
-        //     }
-        //     const user = await userCollection.updateOne(filter,updateDoc);
-        //     res.send(user);
-        // })
+        
         //get user 
         app.get('/user/:email', verifyJwt, async (req, res) => {
             const email = req.params.email;
@@ -203,6 +199,18 @@ async function run() {
         //get all orders
         app.get('/orders', verifyJwt, verifyAdmin, async (req, res) => {
             const result = await orderCollection.find().toArray();
+            res.send(result);
+        })
+        // update order status
+        app.put('/order/:id',verifyJwt,verifyAdmin,async(req,res)=>{
+            const id = req.params.id;
+            const filter = {_id:ObjectId(id)};
+            const updateDoc = {
+                $set:{
+                    status:"shipped"
+                }
+            }
+            const result = await orderCollection.updateOne(filter,updateDoc);
             res.send(result);
         })
         //reviews api
